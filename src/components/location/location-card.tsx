@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import { type LocationFormData } from '@/schemas/location';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -9,7 +10,7 @@ import Chip from '@mui/material/Chip';
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { Trash as DeleteIcon, PencilSimple as EditIcon } from '@phosphor-icons/react/dist/ssr';
+import { Trash as DeleteIcon, PencilSimple as EditIcon, Layout as LayoutIcon } from '@phosphor-icons/react/dist/ssr';
 
 interface LocationCardProps {
   location: LocationFormData;
@@ -18,6 +19,8 @@ interface LocationCardProps {
 }
 
 export function LocationCard({ location, onEdit, onDelete }: LocationCardProps): React.JSX.Element {
+  const router = useRouter();
+
   const handleEdit = () => {
     onEdit(location);
   };
@@ -26,6 +29,10 @@ export function LocationCard({ location, onEdit, onDelete }: LocationCardProps):
     if (location.id) {
       onDelete(location.id);
     }
+  };
+
+  const handleViewLayout = (zoneId: string) => {
+    router.push(`/dashboard/locations/layout?zoneId=${zoneId}`);
   };
 
   return (
@@ -71,6 +78,20 @@ export function LocationCard({ location, onEdit, onDelete }: LocationCardProps):
                             variant="outlined"
                           />
                         </Stack>
+                        <Button
+                          startIcon={<LayoutIcon />}
+                          onClick={() => {
+                            if (zone.id) {
+                              handleViewLayout(zone.id);
+                            }
+                          }}
+                          size="small"
+                          color="primary"
+                          variant="outlined"
+                          fullWidth
+                        >
+                          View Layout
+                        </Button>
                       </Stack>
                     </CardContent>
                   </Card>

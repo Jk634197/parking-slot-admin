@@ -84,7 +84,7 @@ export async function createLocation(data: LocationFormData): Promise<LocationFo
   // console.log('Creating location:', data);
   // const response = await apiClient.post<ApiResponse<LocationFormData>>('/api/Location/create', data);
   // console.log('Create location response:', response);
-  locations.push(data);
+  locations.push({ ...data, id: '3', createdAt: new Date('2024-01-02'), updatedAt: new Date('2024-01-02') });
   return data;
   // } catch (error) {
   //   throw error;

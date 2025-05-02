@@ -20,7 +20,7 @@ import { Controller, useFieldArray, useForm } from 'react-hook-form';
 
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-import { type LocationFormData, locationSchema } from '@/schemas/location';
+import { locationSchema, type LocationFormData } from '@/schemas/location';
 import { getPlaceDetails } from '@/services/mapbox';
 import { Card, CardContent } from '@mui/material';
 import { Plus as PlusIcon, X as XIcon } from '@phosphor-icons/react/dist/ssr';
@@ -118,9 +118,9 @@ export function LocationForm({ open, onClose, onSubmit, initialData }: LocationF
   const updateFormWithPlaceDetails = async (lng: number, lat: number) => {
     const details = await getPlaceDetails(lng, lat);
 
-    if (details.name) {
-      setValue('name', details.name);
-    }
+    // if (details.name) {
+    //   setValue('name', details.name);
+    // }
 
     if (details.address) {
       if (details.address.address1) {
@@ -451,7 +451,8 @@ export function LocationForm({ open, onClose, onSubmit, initialData }: LocationF
             <MapSearch onSelect={handleLocationSelect} />
 
             <div style={{ position: 'relative', height: '400px', width: '100%' }}>
-              {isMapLoading ? <div
+              {isMapLoading ? (
+                <div
                   style={{
                     position: 'absolute',
                     top: 0,
@@ -466,7 +467,8 @@ export function LocationForm({ open, onClose, onSubmit, initialData }: LocationF
                   }}
                 >
                   Loading map...
-                </div> : null}
+                </div>
+              ) : null}
 
               <Card sx={{ height: '100%', width: '100%' }}>
                 <CardContent ref={mapContainer} sx={{ height: '100%', width: '100%' }} />
