@@ -262,17 +262,18 @@ export function ParkingLayoutDesigner({
 
     // Initial fetch
     void fetchLayoutData();
+    // if (previewMode) {
+    //   // Set up interval for periodic updates
+    //   const intervalId = setInterval(() => {
+    //     void fetchLayoutData();
+    //   }, 10000); // 10 seconds
 
-    // Set up interval for periodic updates
-    const intervalId = setInterval(() => {
-      void fetchLayoutData();
-    }, 10000); // 10 seconds
-
-    // Cleanup interval on unmount
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [zoneId, locationId, fetchLayoutData]);
+    //   // Cleanup interval on unmount
+    //   return () => {
+    //     clearInterval(intervalId);
+    //   };
+    // }
+  }, [zoneId, locationId, fetchLayoutData, previewMode]);
 
   // Handle slot booking
   const handleSlotBooking = useCallback(async () => {

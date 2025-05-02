@@ -32,7 +32,7 @@ export function MapSearch({ onSelect }: MapSearchProps): React.JSX.Element {
         const response = await fetch(
           `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
             debouncedSearchTerm
-          )}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}`
+          )}.json?country=in&proximity=ip&types=address%2Ccountry%2Cplace%2Clocality&access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}`
         );
         const data = (await response.json()) as { features: SearchResult[] };
         setResults(data.features);
