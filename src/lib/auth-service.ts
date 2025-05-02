@@ -64,35 +64,33 @@ class AuthService {
   }
 
   async verifyOtp(phone: string, otp: string): Promise<VerifyOtpResponse> {
-    const _response = await apiService.post<VerifyOtpResponse>('/Auth/login', {
-      phone,
-      otp,
-    });
+    console.log('otp', otp);
+    // const _response = await apiService.post<VerifyOtpResponse>('/Auth/login', {
+    //   phone,
+    //   otp,
+    // });
 
-    // // Store the token in the same way as authClient
-    // localStorage.setItem('custom-auth-token', 'dummy-token');
+    // Store the token in the same way as authClient
+    localStorage.setItem('custom-auth-token', 'dummy-token');
 
-    // const user: User = {
-    //   id: 1,
-    //   firstName: 'Dummy',
-    //   lastName: 'User',
-    //   phone: phone,
-    //   email: '',
-    //   createdOn: new Date(),
-    //   createdBy: 0,
-    //   isActive: true,
-    //   isArchived: false,
-    //   userId: 1, // This should match the id for now
-    // };
+    const user: User = {
+      id: 1,
+      firstName: 'Dummy',
+      lastName: 'User',
+      phone: phone,
+      email: '',
+      createdOn: new Date(),
+      createdBy: 0,
+      isActive: true,
+      isArchived: false,
+      userId: 1, // This should match the id for now
+    };
 
     // Store the user data
-    // this.setAuthData('dummy-token', user);
-    this.setAuthData(_response?.token || '', _response);
-    return _response;
-    // return {
-    //   token: 'dummy-token',
-    //   user: user,
-    // };
+    this.setAuthData('dummy-token', user);
+    // this.setAuthData(_response?.token || '', _response);
+    // return _response;
+    return { ...user, token: 'dummy-token' };
   }
 
   async signOut(): Promise<void> {
