@@ -1,9 +1,9 @@
 {
-  "name": "material-kit-react",
+  "name": "finmyspot",
   "version": "4.0.0",
-  "author": "Devias",
+  "author": "FinMySpot",
   "licence": "MIT",
-  "homepage": "https://devias.io",
+  "homepage": "https://finmyspot.com",
   "private": false,
   "scripts": {
     "dev": "next dev",

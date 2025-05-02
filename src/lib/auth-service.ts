@@ -1,8 +1,8 @@
 import {
-  type SignInCredentials,
   signInCredentialsSchema,
-  type SignInResponse,
   signInResponseSchema,
+  type SignInCredentials,
+  type SignInResponse,
   type User,
   type VerifyOtpResponse,
 } from '@/schemas/user';
@@ -64,7 +64,7 @@ class AuthService {
   }
 
   async verifyOtp(phone: string, otp: string): Promise<VerifyOtpResponse> {
-    const _response = await apiService.post<VerifyOtpResponse>('/Auth/loginUser', {
+    const _response = await apiService.post<VerifyOtpResponse>('/Auth/login', {
       phone,
       otp,
     });

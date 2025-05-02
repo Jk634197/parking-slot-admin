@@ -1,3 +1,29 @@
+# FinMySpot - Smart Parking Management System
+
+A modern parking management system built with Next.js and Material-UI.
+
+## Features
+
+- Smart Parking Management
+- Real-time Slot Availability
+- User Authentication
+- Admin Dashboard
+- Parking Analytics
+
+## Getting Started
+
+```bash
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+```
+
+## License
+
+- Licensed under [MIT](LICENSE.md)
+
 ## [Devias Kit - React](https://material-kit-react.devias.io/)
 
 ![license](https://img.shields.io/badge/license-MIT-blue.svg)
