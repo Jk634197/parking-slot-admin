@@ -7,7 +7,7 @@ import {
   type VerifyOtpResponse,
 } from '@/schemas/user';
 
-import { apiService } from './api-service';
+// import { apiService } from './api-service';
 import { authClient } from './auth/client';
 
 class AuthService {
@@ -63,8 +63,7 @@ class AuthService {
     };
   }
 
-  async verifyOtp(phone: string, otp: string): Promise<VerifyOtpResponse> {
-    console.log('otp', otp);
+  async verifyOtp(phone: string, _otp: string): Promise<VerifyOtpResponse> {
     // const _response = await apiService.post<VerifyOtpResponse>('/Auth/login', {
     //   phone,
     //   otp,
