@@ -9,11 +9,14 @@ const StyledCanvas = styled('div')({
   position: 'relative',
   width: '100%',
   height: '100%',
-  minHeight: '500px',
-  overflow: 'hidden',
+  minHeight: '300px',
+  overflow: 'auto',
   backgroundColor: '#f5f5f5',
   border: '2px dashed #ccc',
   borderRadius: '4px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
 });
 
 interface CanvasProps {

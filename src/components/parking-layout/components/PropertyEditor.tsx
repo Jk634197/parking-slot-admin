@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { Box, Slider, TextField, Typography } from '@mui/material';
+import { Box, Button, Slider, TextField, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { Trash as DeleteIcon } from '@phosphor-icons/react/dist/ssr';
 
 import { type Node } from '../types';
 
@@ -16,9 +17,10 @@ const StyledEditor = styled(Box)(({ theme }) => ({
 interface PropertyEditorProps {
   selectedNode: Node | null;
   onNodeUpdate: (updates: Partial<Node>) => void;
+  onNodeDelete?: () => void;
 }
 
-export function PropertyEditor({ selectedNode: selectedNodeProp, onNodeUpdate }: PropertyEditorProps) {
+export function PropertyEditor({ selectedNode: selectedNodeProp, onNodeUpdate, onNodeDelete }: PropertyEditorProps) {
   const [selectedNode, setSelectedNode] = React.useState<Node | null>(selectedNodeProp);
   React.useEffect(() => {
     if (selectedNode?.id !== selectedNodeProp?.id) {
@@ -41,9 +43,12 @@ export function PropertyEditor({ selectedNode: selectedNodeProp, onNodeUpdate }:
 
   return (
     <StyledEditor>
-      <Typography variant="h6" gutterBottom>
-        Properties
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h6">Properties</Typography>
+        {onNodeDelete ? <Button onClick={onNodeDelete} color="error" startIcon={<DeleteIcon />} size="small" variant="outlined">
+            Delete
+          </Button> : null}
+      </Box>
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <TextField
@@ -119,7 +124,7 @@ export function PropertyEditor({ selectedNode: selectedNodeProp, onNodeUpdate }:
           </>
         )}
 
-        {selectedNode.type === 'manager' && (
+        {selectedNode.type === 'security' && (
           <Box>
             <Typography gutterBottom>Size</Typography>
             <Slider

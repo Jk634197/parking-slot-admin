@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { type LocationFormData } from '@/schemas/location';
+import { type LocationFormData, type LocationResponse } from '@/schemas/location';
 import { createLocation, deleteLocation, getLocations, updateLocation } from '@/services/locations';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
@@ -20,17 +20,17 @@ import { LocationForm } from '@/components/location/location-form';
 
 export default function Page(): React.JSX.Element {
   const [open, setOpen] = React.useState(false);
-  const [locations, setLocations] = React.useState<LocationFormData[]>([]);
-  const [filteredLocations, setFilteredLocations] = React.useState<LocationFormData[]>([]);
-  const [selectedLocation, setSelectedLocation] = React.useState<LocationFormData | null>(null);
+  const [locations, setLocations] = React.useState<LocationResponse[]>([]);
+  const [filteredLocations, setFilteredLocations] = React.useState<LocationResponse[]>([]);
+  const [selectedLocation, setSelectedLocation] = React.useState<LocationResponse | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [searchQuery, setSearchQuery] = React.useState('');
 
   const loadLocations = React.useCallback(async () => {
     try {
       const data = await getLocations();
-      setLocations(data);
-      setFilteredLocations(data);
+      setLocations(data.parking);
+      setFilteredLocations(data.parking);
     } catch (err) {
       setError('Failed to load locations');
     }
@@ -49,9 +49,7 @@ export default function Page(): React.JSX.Element {
         location.address.city.toLowerCase().includes(query) ||
         location.address.state.toLowerCase().includes(query) ||
         location.address.zip.toLowerCase().includes(query);
-      const zoneMatch = location.parkingZones.some((zone) => {
-        return zone.name.toLowerCase().includes(query);
-      });
+      const zoneMatch = location.parkingZone.some((zone) => zone.name.toLowerCase().includes(query));
 
       return nameMatch || addressMatch || zoneMatch;
     });
@@ -68,7 +66,7 @@ export default function Page(): React.JSX.Element {
     setSelectedLocation(null);
   };
 
-  const handleEdit = (location: LocationFormData) => {
+  const handleEdit = (location: LocationResponse) => {
     setSelectedLocation(location);
     setOpen(true);
   };
@@ -85,7 +83,7 @@ export default function Page(): React.JSX.Element {
   const handleSubmit = async (data: LocationFormData): Promise<void> => {
     try {
       if (selectedLocation?.id) {
-        await updateLocation(selectedLocation.id, data);
+        await updateLocation(data);
       } else {
         await createLocation(data);
       }
@@ -94,6 +92,10 @@ export default function Page(): React.JSX.Element {
     } catch (err) {
       setError('Failed to save location');
     }
+  };
+
+  const handleCloseError = () => {
+    setError(null);
   };
 
   return (
@@ -109,14 +111,11 @@ export default function Page(): React.JSX.Element {
         </div>
       </Stack>
 
-      {error ? <Alert
-          severity="error"
-          onClose={() => {
-            setError(null);
-          }}
-        >
+      {error ? (
+        <Alert severity="error" onClose={handleCloseError}>
           {error}
-        </Alert> : null}
+        </Alert>
+      ) : null}
 
       <OutlinedInput
         placeholder="Search locations..."
@@ -135,7 +134,13 @@ export default function Page(): React.JSX.Element {
       <Grid container spacing={3}>
         {filteredLocations.map((location) => (
           <Grid item xs={12} md={6} key={location.id}>
-            <LocationCard location={location} onEdit={handleEdit} onDelete={handleDelete} />
+            <LocationCard
+              location={location}
+              onEdit={handleEdit}
+              onDelete={() => {
+                void handleDelete(location.id?.toString() || '');
+              }}
+            />
           </Grid>
         ))}
         {filteredLocations.length === 0 && (
@@ -145,7 +150,34 @@ export default function Page(): React.JSX.Element {
         )}
       </Grid>
 
-      <LocationForm open={open} onClose={handleClose} onSubmit={handleSubmit} initialData={selectedLocation} />
+      <LocationForm
+        open={open}
+        onClose={handleClose}
+        onSubmit={handleSubmit}
+        initialData={
+          selectedLocation
+            ? {
+                name: selectedLocation.name,
+                isActive: selectedLocation.isActive,
+                isArchived: selectedLocation.isArchived,
+                addressDto: {
+                  ...selectedLocation.address,
+                  status: selectedLocation.address.status || 'active',
+                },
+                parkingZoneDto: selectedLocation.parkingZone.map((zone) => ({
+                  ...zone,
+                  startTime: zone.startTime || '',
+                  endTime: zone.endTime || '',
+                  status: zone.status || 'active',
+                  parkingId: zone.parkingId ? parseInt(zone.parkingId, 10) : undefined,
+                })),
+                id: selectedLocation.id,
+                createdAt: selectedLocation.createdAt,
+                updatedAt: selectedLocation.updatedAt,
+              }
+            : undefined
+        }
+      />
     </Stack>
   );
 }

@@ -89,19 +89,57 @@ export function useCanvas({
         const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
         rect.setAttribute('width', (node.width || spec.width).toString());
         rect.setAttribute('height', (node.height || spec.height).toString());
-        rect.setAttribute('fill', node.status ? STATUS_COLORS[node.status] : spec.fill);
+        rect.setAttribute('fill', node.status ? STATUS_COLORS[node.status || 'available'] : spec.fill);
         rect.style.cursor = viewMode ? 'pointer' : 'move';
         g.appendChild(rect);
 
-        if (node.label) {
-          const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-          text.setAttribute('x', ((node.width || spec.width) / 2).toString());
-          text.setAttribute('y', ((node.height || spec.height) / 2 + 5).toString());
-          text.setAttribute('text-anchor', 'middle');
-          text.setAttribute('fill', 'white');
-          text.setAttribute('font-size', '12');
-          text.textContent = node.label;
-          g.appendChild(text);
+        if (node.status === 'booked') {
+          // Create a foreignObject to render React components
+          const foreignObject = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
+          foreignObject.setAttribute('width', (node.width || spec.width).toString());
+          foreignObject.setAttribute('height', (node.height || spec.height).toString());
+          foreignObject.setAttribute('x', '0');
+          foreignObject.setAttribute('y', '0');
+
+          // Create a div to hold the Car icon
+          const div = document.createElement('div');
+          div.style.width = '100%';
+          div.style.height = '100%';
+          div.style.display = 'flex';
+          div.style.alignItems = 'center';
+          div.style.justifyContent = 'center';
+
+          // Create and append the Car icon
+          const carIcon = document.createElement('div');
+          carIcon.innerHTML = `<svg width="24" height="24" viewBox="0 0 256 256" fill="white">
+            <path d="M240,112H229.2L201.9,49.7A15.9,15.9,0,0,0,186.8,40H69.2A15.9,15.9,0,0,0,54.1,49.7L26.8,112H16a8,8,0,0,0,0,16h8v80a16,16,0,0,0,16,16H64a16,16,0,0,0,16-16V192h96v16a16,16,0,0,0,16,16h24a16,16,0,0,0,16-16V128h8A8,8,0,0,0,240,112ZM69.2,56H186.8l24.9,56H44.3ZM64,208H40V192H64Zm160,0H192V192h32Zm0-32H32V128H224Z"/>
+          </svg>`;
+          div.appendChild(carIcon);
+          foreignObject.appendChild(div);
+          g.appendChild(foreignObject);
+        } else {
+          // Show label only for non-booked slots
+          if (node.label) {
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', ((node.width || spec.width) / 2).toString());
+            text.setAttribute('y', ((node.height || spec.height) / 2 + 5).toString());
+            text.setAttribute('text-anchor', 'middle');
+            text.setAttribute('fill', 'white');
+            text.setAttribute('font-size', '12');
+            text.textContent = node.label;
+            g.appendChild(text);
+          }
+        }
+
+        if (node.vehicleNumber) {
+          const vehicleText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          vehicleText.setAttribute('x', ((node.width || spec.width) / 2).toString());
+          vehicleText.setAttribute('y', ((node.height || spec.height) - 4).toString());
+          vehicleText.setAttribute('text-anchor', 'middle');
+          vehicleText.setAttribute('fill', 'white');
+          vehicleText.setAttribute('font-size', '10');
+          vehicleText.textContent = node.vehicleNumber;
+          g.appendChild(vehicleText);
         }
       } else if (node.type === 'text') {
         const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -114,35 +152,31 @@ export function useCanvas({
         text.textContent = node.label;
         text.style.cursor = viewMode ? 'pointer' : 'move';
         g.appendChild(text);
-      } else if (node.type === 'manager') {
+      } else if (node.type === 'security') {
         const size = node.width || spec.width;
-        // Create a house-like shape for manager cabin
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        const halfSize = size / 2;
-        const wallHeight = size * 0.6;
-        const wallY = size - wallHeight;
+        // Draw security cabin as a rounded square
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('width', size.toString());
+        rect.setAttribute('height', size.toString());
+        rect.setAttribute('x', '0');
+        rect.setAttribute('y', '0');
+        rect.setAttribute('rx', '8');
+        rect.setAttribute('fill', spec.fill);
+        rect.style.cursor = viewMode ? 'pointer' : 'move';
+        g.appendChild(rect);
 
-        // Draw the house shape: roof + walls
-        path.setAttribute(
-          'd',
-          `M0 ${wallY} L${halfSize} 0 L${size} ${wallY} L${size} ${size} L0 ${size} Z
-           M${size * 0.2} ${size} L${size * 0.2} ${wallY + wallHeight * 0.4} L${size * 0.4} ${wallY + wallHeight * 0.4} L${size * 0.4} ${size} Z
-           M${size * 0.6} ${size} L${size * 0.6} ${wallY + wallHeight * 0.4} L${size * 0.8} ${wallY + wallHeight * 0.4} L${size * 0.8} ${size} Z`
-        );
-        path.setAttribute('fill', spec.fill);
-        g.appendChild(path);
+        // Add 'S' letter in the center
+        const centerText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        centerText.setAttribute('x', (size / 2).toString());
+        centerText.setAttribute('y', (size / 2 + size * 0.1).toString());
+        centerText.setAttribute('text-anchor', 'middle');
+        centerText.setAttribute('fill', 'white');
+        centerText.setAttribute('font-size', (size * 0.5).toString());
+        centerText.setAttribute('font-weight', 'bold');
+        centerText.textContent = 'S';
+        g.appendChild(centerText);
 
-        // Add 'M' letter in the center of the house
-        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        text.setAttribute('x', (size / 2).toString());
-        text.setAttribute('y', (size * 0.5).toString());
-        text.setAttribute('text-anchor', 'middle');
-        text.setAttribute('fill', 'white');
-        text.setAttribute('font-size', (size * 0.4).toString());
-        text.setAttribute('font-weight', 'bold');
-        text.textContent = 'M';
-        g.appendChild(text);
-
+        // Render label below cabin if provided
         if (node.label) {
           const labelText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
           labelText.setAttribute('x', (size / 2).toString());

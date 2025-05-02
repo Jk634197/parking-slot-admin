@@ -11,9 +11,10 @@ import {
   FloppyDisk,
   PencilSimple,
   TextT,
-  UploadSimple,
   User,
 } from '@phosphor-icons/react';
+
+import { useUser } from '@/hooks/use-user';
 
 import { type NodeType } from '../types';
 
@@ -45,6 +46,7 @@ interface ToolbarProps {
   onSlotSuffixChange: (suffix: string) => void;
   slotSeries: number | '';
   onSlotSeriesChange: (series: number | '') => void;
+  isSaving?: boolean;
 }
 
 export function Toolbar({
@@ -53,12 +55,15 @@ export function Toolbar({
   onViewModeChange,
   onToolbarDragStart,
   onSave,
-  onFileUpload,
   slotSuffix,
   onSlotSuffixChange,
   slotSeries,
   onSlotSeriesChange,
+  isSaving = false,
 }: ToolbarProps) {
+  const { user } = useUser();
+  const isAuthenticated = Boolean(user);
+
   const handleDragStart = (type: NodeType) => {
     onToolbarDragStart(type);
   };
@@ -79,8 +84,7 @@ export function Toolbar({
 
   return (
     <StyledToolbar>
-      {!readOnly && (
-        <>
+      {!readOnly && !viewMode && isAuthenticated ? <>
           <Tooltip title="Add Horizontal Parking Slot">
             <StyledDraggableIcon
               onMouseDown={() => {
@@ -111,10 +115,10 @@ export function Toolbar({
               <TextT weight="bold" />
             </StyledDraggableIcon>
           </Tooltip>
-          <Tooltip title="Add Manager Station">
+          <Tooltip title="Add Security Station">
             <StyledDraggableIcon
               onMouseDown={() => {
-                handleDragStart('manager');
+                handleDragStart('security');
               }}
               color="secondary"
             >
@@ -179,32 +183,23 @@ export function Toolbar({
             inputProps={{ min: 1 }}
             sx={{ width: 100 }}
           />
-        </>
-      )}
+        </> : null}
 
       <Box sx={{ flexGrow: 1 }} />
 
-      {!readOnly && (
-        <>
-          <Button variant="contained" startIcon={<FloppyDisk weight="bold" />} onClick={onSave}>
-            Save Layout
-          </Button>
-          <Button variant="outlined" startIcon={<UploadSimple weight="bold" />} component="label">
-            Load Layout
-            <input type="file" hidden accept="application/json" onChange={onFileUpload} />
-          </Button>
-        </>
-      )}
+      {!readOnly && isAuthenticated ? <Button variant="contained" startIcon={<FloppyDisk weight="bold" />} onClick={onSave} disabled={isSaving}>
+            {isSaving ? 'Saving...' : 'Save Layout'}
+          </Button> : null}
 
-      <FormControlLabel
-        control={<Switch checked={viewMode} onChange={handleViewModeChange} disabled={readOnly} />}
-        label={
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {viewMode ? <Eye weight="bold" size={20} /> : <PencilSimple weight="bold" size={20} />}
-            <Typography>{viewMode ? 'View Mode' : 'Edit Mode'}</Typography>
-          </Box>
-        }
-      />
+      {isAuthenticated ? <FormControlLabel
+          control={<Switch checked={viewMode} onChange={handleViewModeChange} disabled={readOnly} />}
+          label={
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {viewMode ? <Eye weight="bold" size={20} /> : <PencilSimple weight="bold" size={20} />}
+              <Typography>{viewMode ? 'View Mode' : 'Edit Mode'}</Typography>
+            </Box>
+          }
+        /> : null}
     </StyledToolbar>
   );
 }

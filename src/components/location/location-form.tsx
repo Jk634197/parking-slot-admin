@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Card, CardContent, styled, TextField } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
@@ -20,9 +21,8 @@ import { Controller, useFieldArray, useForm } from 'react-hook-form';
 
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-import { locationSchema, type LocationFormData } from '@/schemas/location';
+import { locationRequestSchema, type LocationFormData } from '@/schemas/location';
 import { getPlaceDetails } from '@/services/mapbox';
-import { Card, CardContent } from '@mui/material';
 import { Plus as PlusIcon, X as XIcon } from '@phosphor-icons/react/dist/ssr';
 
 import { MapSearch } from './map-search';
@@ -34,9 +34,50 @@ interface LocationFormProps {
   initialData?: LocationFormData | null;
 }
 
+interface FormError {
+  message: string;
+  type: string;
+}
+
+const TimeTextField = styled(TextField)(({ theme }) => ({
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '8px',
+    backgroundColor: theme.palette.background.paper,
+    '& fieldset': {
+      borderColor: theme.palette.divider,
+      borderWidth: '1px',
+    },
+    '&:hover fieldset': {
+      borderColor: theme.palette.primary.main,
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: theme.palette.primary.main,
+      borderWidth: '2px',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    color: theme.palette.text.secondary,
+    '&.Mui-focused': {
+      color: theme.palette.primary.main,
+    },
+  },
+  '& input[type="time"]': {
+    padding: '12px 14px',
+    fontSize: '1rem',
+    '&::-webkit-calendar-picker-indicator': {
+      filter: 'invert(0.5)',
+      cursor: 'pointer',
+      '&:hover': {
+        filter: 'invert(0.3)',
+      },
+    },
+  },
+}));
+
 export function LocationForm({ open, onClose, onSubmit, initialData }: LocationFormProps): React.JSX.Element {
   const [isPending, setIsPending] = React.useState<boolean>(false);
   const [isMapLoading, setIsMapLoading] = React.useState<boolean>(true);
+  const [formError, setFormError] = React.useState<FormError | null>(null);
   const mapContainer = React.useRef<HTMLDivElement>(null);
   const map = React.useRef<mapboxgl.Map | null>(null);
   const marker = React.useRef<mapboxgl.Marker | null>(null);
@@ -45,26 +86,25 @@ export function LocationForm({ open, onClose, onSubmit, initialData }: LocationF
     control,
     handleSubmit,
     setValue,
-    setError,
     reset,
     formState: { errors },
   } = useForm<LocationFormData>({
     defaultValues: {
       name: '',
-      address: {
+      isActive: true,
+      isArchived: false,
+      addressDto: {
         address1: '',
         address2: '',
         city: '',
         state: '',
         country: '',
         zip: '',
-
         latitude: 23.0225,
         longitude: 72.5714,
-
         status: 'active',
       },
-      parkingZones: [
+      parkingZoneDto: [
         {
           name: '',
           price: 0,
@@ -72,15 +112,18 @@ export function LocationForm({ open, onClose, onSubmit, initialData }: LocationF
           totalSlots: 1,
           availableSlots: 1,
           status: 'active',
+          startTime: '',
+          endTime: '',
+          slots: '',
         },
       ],
     },
-    resolver: zodResolver(locationSchema),
+    resolver: zodResolver(locationRequestSchema),
   });
 
   const { fields, append, remove } = useFieldArray({
     control,
-    name: 'parkingZones',
+    name: 'parkingZoneDto',
   });
 
   React.useEffect(() => {
@@ -89,7 +132,9 @@ export function LocationForm({ open, onClose, onSubmit, initialData }: LocationF
     } else {
       reset({
         name: '',
-        address: {
+        isActive: true,
+        isArchived: false,
+        addressDto: {
           address1: '',
           address2: '',
           city: '',
@@ -98,10 +143,9 @@ export function LocationForm({ open, onClose, onSubmit, initialData }: LocationF
           zip: '',
           latitude: 23.0225,
           longitude: 72.5714,
-
           status: 'active',
         },
-        parkingZones: [
+        parkingZoneDto: [
           {
             name: '',
             price: 0,
@@ -109,6 +153,9 @@ export function LocationForm({ open, onClose, onSubmit, initialData }: LocationF
             totalSlots: 1,
             availableSlots: 1,
             status: 'active',
+            startTime: '',
+            endTime: '',
+            slots: '',
           },
         ],
       });
@@ -118,28 +165,24 @@ export function LocationForm({ open, onClose, onSubmit, initialData }: LocationF
   const updateFormWithPlaceDetails = async (lng: number, lat: number) => {
     const details = await getPlaceDetails(lng, lat);
 
-    // if (details.name) {
-    //   setValue('name', details.name);
-    // }
-
     if (details.address) {
       if (details.address.address1) {
-        setValue('address.address1', details.address.address1);
+        setValue('addressDto.address1', details.address.address1);
       }
       if (details.address.address2) {
-        setValue('address.address2', details.address.address2);
+        setValue('addressDto.address2', details.address.address2);
       }
       if (details.address.city) {
-        setValue('address.city', details.address.city);
+        setValue('addressDto.city', details.address.city);
       }
       if (details.address.state) {
-        setValue('address.state', details.address.state);
+        setValue('addressDto.state', details.address.state);
       }
       if (details.address.country) {
-        setValue('address.country', details.address.country);
+        setValue('addressDto.country', details.address.country);
       }
       if (details.address.zip) {
-        setValue('address.zip', details.address.zip);
+        setValue('addressDto.zip', details.address.zip);
       }
     }
   };
@@ -179,8 +222,8 @@ export function LocationForm({ open, onClose, onSubmit, initialData }: LocationF
           marker.current.on('dragend', async () => {
             const lngLat = marker.current?.getLngLat();
             if (lngLat) {
-              setValue('address.latitude', lngLat.lat);
-              setValue('address.longitude', lngLat.lng);
+              setValue('addressDto.latitude', lngLat.lat);
+              setValue('addressDto.longitude', lngLat.lng);
               await updateFormWithPlaceDetails(lngLat.lng, lngLat.lat);
             }
           });
@@ -188,8 +231,8 @@ export function LocationForm({ open, onClose, onSubmit, initialData }: LocationF
           map.current!.on('click', async (e) => {
             const { lng, lat } = e.lngLat;
             marker.current?.setLngLat([lng, lat]);
-            setValue('address.latitude', lat);
-            setValue('address.longitude', lng);
+            setValue('addressDto.latitude', lat);
+            setValue('addressDto.longitude', lng);
             await updateFormWithPlaceDetails(lng, lat);
           });
 
@@ -211,8 +254,8 @@ export function LocationForm({ open, onClose, onSubmit, initialData }: LocationF
   }, [open, setValue]);
 
   const handleLocationSelect = async (latitude: number, longitude: number) => {
-    setValue('address.latitude', latitude);
-    setValue('address.longitude', longitude);
+    setValue('addressDto.latitude', latitude);
+    setValue('addressDto.longitude', longitude);
     map.current?.flyTo({
       center: [longitude, latitude],
       zoom: 12,
@@ -224,16 +267,21 @@ export function LocationForm({ open, onClose, onSubmit, initialData }: LocationF
   const onFormSubmit = async (values: LocationFormData): Promise<void> => {
     try {
       setIsPending(true);
+      setFormError(null);
       await onSubmit(values);
       onClose();
     } catch (error) {
-      setError('root', {
-        type: 'server',
+      setFormError({
         message: error instanceof Error ? error.message : 'Failed to save location',
+        type: 'error',
       });
     } finally {
       setIsPending(false);
     }
+  };
+
+  const handleCloseError = () => {
+    setFormError(null);
   };
 
   return (
@@ -242,7 +290,17 @@ export function LocationForm({ open, onClose, onSubmit, initialData }: LocationF
       <DialogContent>
         <form onSubmit={handleSubmit(onFormSubmit)}>
           <Stack spacing={3} sx={{ mt: 2 }}>
-            {errors.root ? <Alert color="error">{errors.root.message}</Alert> : null}
+            {formError ? (
+              <Alert severity="error" onClose={handleCloseError} sx={{ mb: 2 }}>
+                {formError.message}
+              </Alert>
+            ) : null}
+
+            {Object.keys(errors).length > 0 && (
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                Please fix the validation errors in the form
+              </Alert>
+            )}
 
             <Controller
               control={control}
@@ -258,24 +316,28 @@ export function LocationForm({ open, onClose, onSubmit, initialData }: LocationF
 
             <Controller
               control={control}
-              name="address.address1"
+              name="addressDto.address1"
               render={({ field }) => (
-                <FormControl error={Boolean(errors.address?.address1)} fullWidth>
+                <FormControl error={Boolean(errors.addressDto?.address1)} fullWidth>
                   <InputLabel>Address 1</InputLabel>
                   <OutlinedInput {...field} label="Address 1" />
-                  {errors.address?.address1 ? <FormHelperText>{errors.address.address1.message}</FormHelperText> : null}
+                  {errors.addressDto?.address1 ? (
+                    <FormHelperText>{errors.addressDto.address1.message}</FormHelperText>
+                  ) : null}
                 </FormControl>
               )}
             />
 
             <Controller
               control={control}
-              name="address.address2"
+              name="addressDto.address2"
               render={({ field }) => (
-                <FormControl error={Boolean(errors.address?.address2)} fullWidth>
+                <FormControl error={Boolean(errors.addressDto?.address2)} fullWidth>
                   <InputLabel>Address 2</InputLabel>
                   <OutlinedInput {...field} label="Address 2" />
-                  {errors.address?.address2 ? <FormHelperText>{errors.address.address2.message}</FormHelperText> : null}
+                  {errors.addressDto?.address2 ? (
+                    <FormHelperText>{errors.addressDto.address2.message}</FormHelperText>
+                  ) : null}
                 </FormControl>
               )}
             />
@@ -283,23 +345,23 @@ export function LocationForm({ open, onClose, onSubmit, initialData }: LocationF
             <Stack direction="row" spacing={2}>
               <Controller
                 control={control}
-                name="address.city"
+                name="addressDto.city"
                 render={({ field }) => (
-                  <FormControl error={Boolean(errors.address?.city)} fullWidth>
+                  <FormControl error={Boolean(errors.addressDto?.city)} fullWidth>
                     <InputLabel>City</InputLabel>
                     <OutlinedInput {...field} label="City" />
-                    {errors.address?.city ? <FormHelperText>{errors.address.city.message}</FormHelperText> : null}
+                    {errors.addressDto?.city ? <FormHelperText>{errors.addressDto.city.message}</FormHelperText> : null}
                   </FormControl>
                 )}
               />
               <Controller
                 control={control}
-                name="address.zip"
+                name="addressDto.zip"
                 render={({ field }) => (
-                  <FormControl error={Boolean(errors.address?.zip)} fullWidth>
+                  <FormControl error={Boolean(errors.addressDto?.zip)} fullWidth>
                     <InputLabel>ZIP Code</InputLabel>
                     <OutlinedInput {...field} label="ZIP Code" />
-                    {errors.address?.zip ? <FormHelperText>{errors.address.zip.message}</FormHelperText> : null}
+                    {errors.addressDto?.zip ? <FormHelperText>{errors.addressDto.zip.message}</FormHelperText> : null}
                   </FormControl>
                 )}
               />
@@ -308,23 +370,27 @@ export function LocationForm({ open, onClose, onSubmit, initialData }: LocationF
             <Stack direction="row" spacing={2}>
               <Controller
                 control={control}
-                name="address.state"
+                name="addressDto.state"
                 render={({ field }) => (
-                  <FormControl error={Boolean(errors.address?.state)} fullWidth>
+                  <FormControl error={Boolean(errors.addressDto?.state)} fullWidth>
                     <InputLabel>State</InputLabel>
                     <OutlinedInput {...field} label="State" />
-                    {errors.address?.state ? <FormHelperText>{errors.address.state.message}</FormHelperText> : null}
+                    {errors.addressDto?.state ? (
+                      <FormHelperText>{errors.addressDto.state.message}</FormHelperText>
+                    ) : null}
                   </FormControl>
                 )}
               />
               <Controller
                 control={control}
-                name="address.country"
+                name="addressDto.country"
                 render={({ field }) => (
-                  <FormControl error={Boolean(errors.address?.country)} fullWidth>
+                  <FormControl error={Boolean(errors.addressDto?.country)} fullWidth>
                     <InputLabel>Country</InputLabel>
                     <OutlinedInput {...field} label="Country" />
-                    {errors.address?.country ? <FormHelperText>{errors.address.country.message}</FormHelperText> : null}
+                    {errors.addressDto?.country ? (
+                      <FormHelperText>{errors.addressDto.country.message}</FormHelperText>
+                    ) : null}
                   </FormControl>
                 )}
               />
@@ -353,22 +419,22 @@ export function LocationForm({ open, onClose, onSubmit, initialData }: LocationF
                 <Stack direction="row" spacing={2}>
                   <Controller
                     control={control}
-                    name={`parkingZones.${index}.name`}
+                    name={`parkingZoneDto.${index}.name`}
                     render={({ field: fieldProps }) => (
-                      <FormControl error={Boolean(errors.parkingZones?.[index]?.name)} fullWidth>
+                      <FormControl error={Boolean(errors.parkingZoneDto?.[index]?.name)} fullWidth>
                         <InputLabel>Zone Name</InputLabel>
                         <OutlinedInput {...fieldProps} label="Zone Name" />
-                        {errors.parkingZones?.[index]?.name ? (
-                          <FormHelperText>{errors.parkingZones[index].name?.message}</FormHelperText>
+                        {errors.parkingZoneDto?.[index]?.name ? (
+                          <FormHelperText>{errors.parkingZoneDto[index].name?.message}</FormHelperText>
                         ) : null}
                       </FormControl>
                     )}
                   />
                   <Controller
                     control={control}
-                    name={`parkingZones.${index}.price`}
+                    name={`parkingZoneDto.${index}.price`}
                     render={({ field: fieldProps }) => (
-                      <FormControl error={Boolean(errors.parkingZones?.[index]?.price)} fullWidth>
+                      <FormControl error={Boolean(errors.parkingZoneDto?.[index]?.price)} fullWidth>
                         <InputLabel>Price</InputLabel>
                         <OutlinedInput
                           {...fieldProps}
@@ -378,8 +444,8 @@ export function LocationForm({ open, onClose, onSubmit, initialData }: LocationF
                             fieldProps.onChange(Number(e.target.value));
                           }}
                         />
-                        {errors.parkingZones?.[index]?.price ? (
-                          <FormHelperText>{errors.parkingZones[index].price?.message}</FormHelperText>
+                        {errors.parkingZoneDto?.[index]?.price ? (
+                          <FormHelperText>{errors.parkingZoneDto[index].price?.message}</FormHelperText>
                         ) : null}
                       </FormControl>
                     )}
@@ -389,9 +455,9 @@ export function LocationForm({ open, onClose, onSubmit, initialData }: LocationF
                 <Stack direction="row" spacing={2}>
                   <Controller
                     control={control}
-                    name={`parkingZones.${index}.minutes`}
+                    name={`parkingZoneDto.${index}.minutes`}
                     render={({ field: fieldProps }) => (
-                      <FormControl error={Boolean(errors.parkingZones?.[index]?.minutes)} fullWidth>
+                      <FormControl error={Boolean(errors.parkingZoneDto?.[index]?.minutes)} fullWidth>
                         <InputLabel>Minutes</InputLabel>
                         <OutlinedInput
                           {...fieldProps}
@@ -401,17 +467,17 @@ export function LocationForm({ open, onClose, onSubmit, initialData }: LocationF
                             fieldProps.onChange(Number(e.target.value));
                           }}
                         />
-                        {errors.parkingZones?.[index]?.minutes ? (
-                          <FormHelperText>{errors.parkingZones[index].minutes?.message}</FormHelperText>
+                        {errors.parkingZoneDto?.[index]?.minutes ? (
+                          <FormHelperText>{errors.parkingZoneDto[index].minutes?.message}</FormHelperText>
                         ) : null}
                       </FormControl>
                     )}
                   />
                   <Controller
                     control={control}
-                    name={`parkingZones.${index}.totalSlots`}
+                    name={`parkingZoneDto.${index}.totalSlots`}
                     render={({ field: fieldProps }) => (
-                      <FormControl error={Boolean(errors.parkingZones?.[index]?.totalSlots)} fullWidth>
+                      <FormControl error={Boolean(errors.parkingZoneDto?.[index]?.totalSlots)} fullWidth>
                         <InputLabel>Total Slots</InputLabel>
                         <OutlinedInput
                           {...fieldProps}
@@ -421,8 +487,59 @@ export function LocationForm({ open, onClose, onSubmit, initialData }: LocationF
                             fieldProps.onChange(Number(e.target.value));
                           }}
                         />
-                        {errors.parkingZones?.[index]?.totalSlots ? (
-                          <FormHelperText>{errors.parkingZones[index].totalSlots?.message}</FormHelperText>
+                        {errors.parkingZoneDto?.[index]?.totalSlots ? (
+                          <FormHelperText>{errors.parkingZoneDto[index].totalSlots?.message}</FormHelperText>
+                        ) : null}
+                      </FormControl>
+                    )}
+                  />
+                </Stack>
+
+                <Stack direction="row" spacing={2}>
+                  <Controller
+                    control={control}
+                    name={`parkingZoneDto.${index}.startTime`}
+                    render={({ field: fieldProps }) => (
+                      <FormControl error={Boolean(errors.parkingZoneDto?.[index]?.startTime)} fullWidth>
+                        <TimeTextField
+                          {...fieldProps}
+                          label="Opening Time"
+                          type="time"
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          inputProps={{
+                            step: 300, // 5 min
+                          }}
+                          fullWidth
+                          placeholder="Select time"
+                        />
+                        {errors.parkingZoneDto?.[index]?.startTime ? (
+                          <FormHelperText>{errors.parkingZoneDto[index].startTime?.message}</FormHelperText>
+                        ) : null}
+                      </FormControl>
+                    )}
+                  />
+                  <Controller
+                    control={control}
+                    name={`parkingZoneDto.${index}.endTime`}
+                    render={({ field: fieldProps }) => (
+                      <FormControl error={Boolean(errors.parkingZoneDto?.[index]?.endTime)} fullWidth>
+                        <TimeTextField
+                          {...fieldProps}
+                          label="Closing Time"
+                          type="time"
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          inputProps={{
+                            step: 300, // 5 min
+                          }}
+                          fullWidth
+                          placeholder="Select time"
+                        />
+                        {errors.parkingZoneDto?.[index]?.endTime ? (
+                          <FormHelperText>{errors.parkingZoneDto[index].endTime?.message}</FormHelperText>
                         ) : null}
                       </FormControl>
                     )}
@@ -441,6 +558,8 @@ export function LocationForm({ open, onClose, onSubmit, initialData }: LocationF
                   totalSlots: 1,
                   availableSlots: 1,
                   status: 'active',
+                  startTime: '',
+                  endTime: '',
                 });
               }}
               variant="outlined"
@@ -482,7 +601,7 @@ export function LocationForm({ open, onClose, onSubmit, initialData }: LocationF
           Cancel
         </Button>
         <Button onClick={handleSubmit(onFormSubmit)} disabled={isPending} variant="contained">
-          Save
+          {isPending ? 'Saving...' : 'Save'}
         </Button>
       </DialogActions>
     </Dialog>

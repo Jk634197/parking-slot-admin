@@ -12,11 +12,7 @@ export function StatusLegend() {
       </Box>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Box sx={{ width: 20, height: 20, bgcolor: STATUS_COLORS.booked, borderRadius: 1 }} />
-        <Typography variant="body2">Booked</Typography>
-      </Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <Box sx={{ width: 20, height: 20, bgcolor: STATUS_COLORS.reserved, borderRadius: 1 }} />
-        <Typography variant="body2">Reserved</Typography>
+        <Typography variant="body2">Occupied</Typography>
       </Box>
     </Box>
   );

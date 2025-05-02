@@ -19,7 +19,7 @@ interface AuthState {
   refreshToken: string;
 }
 
-const AUTH_STORAGE_KEY = 'auth_state';
+const AUTH_STORAGE_KEY = 'user';
 
 export const authService = {
   async login(otp: string): Promise<LoginResponse> {

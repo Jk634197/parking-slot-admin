@@ -28,18 +28,25 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+function getAuthHeaders(requiresAuth: boolean): Headers {
+  const headers = new Headers();
+  headers.set('Content-Type', 'application/json');
+
+  if (requiresAuth) {
+    const token = authService.getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  return headers;
+}
+
 export const apiClient = {
   async get<T>(url: string, options: RequestOptions = {}): Promise<T> {
     const { requiresAuth = true, ...fetchOptions } = options;
-    const headers = new Headers(fetchOptions.headers);
-
-    if (requiresAuth) {
-      const token = authService.getToken();
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-      headers.set('Authorization', `Bearer ${token}`);
-    }
+    const headers = getAuthHeaders(requiresAuth);
 
     const response = await fetch(`${API_BASE_URL}${url}`, {
       ...fetchOptions,
@@ -52,16 +59,7 @@ export const apiClient = {
 
   async post<T>(url: string, data: unknown, options: RequestOptions = {}): Promise<T> {
     const { requiresAuth = true, ...fetchOptions } = options;
-    const headers = new Headers(fetchOptions.headers);
-    headers.set('Content-Type', 'application/json');
-
-    if (requiresAuth) {
-      const token = authService.getToken();
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-      headers.set('Authorization', `Bearer ${token}`);
-    }
+    const headers = getAuthHeaders(requiresAuth);
 
     const response = await fetch(`${API_BASE_URL}${url}`, {
       ...fetchOptions,
@@ -75,16 +73,7 @@ export const apiClient = {
 
   async put<T>(url: string, data: unknown, options: RequestOptions = {}): Promise<T> {
     const { requiresAuth = true, ...fetchOptions } = options;
-    const headers = new Headers(fetchOptions.headers);
-    headers.set('Content-Type', 'application/json');
-
-    if (requiresAuth) {
-      const token = authService.getToken();
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-      headers.set('Authorization', `Bearer ${token}`);
-    }
+    const headers = getAuthHeaders(requiresAuth);
 
     const response = await fetch(`${API_BASE_URL}${url}`, {
       ...fetchOptions,
@@ -98,15 +87,7 @@ export const apiClient = {
 
   async delete<T>(url: string, options: RequestOptions = {}): Promise<T> {
     const { requiresAuth = true, ...fetchOptions } = options;
-    const headers = new Headers(fetchOptions.headers);
-
-    if (requiresAuth) {
-      const token = authService.getToken();
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-      headers.set('Authorization', `Bearer ${token}`);
-    }
+    const headers = getAuthHeaders(requiresAuth);
 
     const response = await fetch(`${API_BASE_URL}${url}`, {
       ...fetchOptions,

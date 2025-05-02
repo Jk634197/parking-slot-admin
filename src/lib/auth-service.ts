@@ -7,7 +7,7 @@ import {
   type VerifyOtpResponse,
 } from '@/schemas/user';
 
-// import { apiService } from './api-service';
+import { apiService } from './api-service';
 import { authClient } from './auth/client';
 
 class AuthService {
@@ -63,33 +63,13 @@ class AuthService {
     };
   }
 
-  async verifyOtp(phone: string, _otp: string): Promise<VerifyOtpResponse> {
-    // const _response = await apiService.post<VerifyOtpResponse>('/Auth/login', {
-    //   phone,
-    //   otp,
-    // });
-
-    // Store the token in the same way as authClient
-    localStorage.setItem('custom-auth-token', 'dummy-token');
-
-    const user: User = {
-      id: 1,
-      firstName: 'Dummy',
-      lastName: 'User',
-      phone: phone,
-      email: '',
-      createdOn: new Date(),
-      createdBy: 0,
-      isActive: true,
-      isArchived: false,
-      userId: 1, // This should match the id for now
-    };
-
-    // Store the user data
-    this.setAuthData('dummy-token', user);
-    // this.setAuthData(_response?.token || '', _response);
-    // return _response;
-    return { ...user, token: 'dummy-token' };
+  async verifyOtp(phone: string, otp: string): Promise<VerifyOtpResponse> {
+    const _response = await apiService.post<VerifyOtpResponse>('/Auth/login', {
+      phone,
+      otp,
+    });
+    this.setAuthData(_response?.token || '', _response);
+    return _response;
   }
 
   async signOut(): Promise<void> {
