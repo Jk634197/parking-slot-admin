@@ -27,7 +27,7 @@ export async function updateLocation(data: LocationFormData): Promise<LocationRe
 }
 
 export async function deleteLocation(id: string): Promise<void> {
-  await apiClient.delete<ApiResponse<void>>(`/Location/delete/${id}`);
+  await apiClient.delete<ApiResponse<void>>(`/Parking/DeleteParking/${id}`);
 }
 
 export async function saveZoneSlotLayout(zoneId: number, nodes: Node[]): Promise<void> {

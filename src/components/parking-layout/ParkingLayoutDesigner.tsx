@@ -256,24 +256,28 @@ export function ParkingLayoutDesigner({
     }
   }, [zoneId, locationId]);
 
+  const startIntervalFetch = useCallback(() => {
+    if (!zoneId || !viewMode) return;
+
+    const intervalId = setInterval(() => {
+      void fetchLayoutData();
+    }, 10000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [zoneId, viewMode, fetchLayoutData]);
+
   // Load layout from API or fallback to localStorage
   React.useEffect(() => {
     if (!zoneId) return;
 
     // Initial fetch
     void fetchLayoutData();
-    // if (previewMode) {
-    //   // Set up interval for periodic updates
-    //   const intervalId = setInterval(() => {
-    //     void fetchLayoutData();
-    //   }, 10000); // 10 seconds
 
-    //   // Cleanup interval on unmount
-    //   return () => {
-    //     clearInterval(intervalId);
-    //   };
-    // }
-  }, [zoneId, locationId, fetchLayoutData, previewMode]);
+    // Start interval fetch if in view mode
+    return startIntervalFetch();
+  }, [zoneId, locationId, fetchLayoutData, startIntervalFetch]);
 
   // Handle slot booking
   const handleSlotBooking = useCallback(async () => {
